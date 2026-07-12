@@ -10,16 +10,18 @@ Deno.serve(async (req: Request) => {
     if (body.access !== ACCESS) return new Response("Forbidden", { status: 403 });
     const paperCode = String(body.paper_code || "").toUpperCase();
     const assetType = String(body.asset_type || "");
-    const driveId = String(body.drive_id || "");
-    if (!/^[MN]\d{2}$/.test(paperCode) || !["question", "markscheme"].includes(assetType) || !driveId) {
+    if (!/^[MN]\d{2}$/.test(paperCode) || !["question", "markscheme"].includes(assetType)) {
       return Response.json({ error: "Invalid parameters" }, { status: 400 });
     }
-    const sourceResponse = await fetch(`https://drive.usercontent.google.com/download?id=${driveId}&export=download&confirm=t`, { redirect: "follow" });
+    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+    const { data: source, error: sourceError } = await sb.from("audit_source_registry")
+      .select("drive_id,page_count").eq("paper_code", paperCode).eq("asset_type", assetType).single();
+    if (sourceError || !source) throw sourceError || new Error("Source not registered");
+    const sourceResponse = await fetch(`https://drive.usercontent.google.com/download?id=${source.drive_id}&export=download&confirm=t`, { redirect: "follow" });
     if (!sourceResponse.ok) throw new Error(`Drive download failed: ${sourceResponse.status}`);
     const document = mupdf.Document.openDocument(new Uint8Array(await sourceResponse.arrayBuffer()), "application/pdf");
     const fromPage = Math.max(1, Number(body.page_from || 1));
     const toPage = Math.min(document.countPages(), Number(body.page_to || document.countPages()));
-    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
     const results: any[] = [];
     for (let pageNumber = fromPage; pageNumber <= toPage; pageNumber++) {
       const page = document.loadPage(pageNumber - 1);
