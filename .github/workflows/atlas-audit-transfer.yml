@@ -7,13 +7,49 @@ on:
 jobs:
   transfer:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - name: Download private audit bundle
+      - name: Download private audit bundles
+        shell: bash
         run: |
-          curl --fail --location 'https://wuwiwuhbunithfoiafzy.supabase.co/storage/v1/object/sign/question-assets/_precision_crop_review/M16_question.zip?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8wMzc4NWI3Zi0xZTJkLTQ3MGMtOTY3Zi1hNjg3NWQxMGI3OWEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJxdWVzdGlvbi1hc3NldHMvX3ByZWNpc2lvbl9jcm9wX3Jldmlldy9NMTZfcXVlc3Rpb24uemlwIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4Mzg3NTkwOCwiZXhwIjoxNzgzODgzMTA4fQ.jPUEtnE2VIv41l3rFM130A7Mx0knq19Ommk4GU9KonQ' --output M16_question.zip
-      - name: Upload audit artifact
+          set -euo pipefail
+          mkdir -p bundles/question bundles/markscheme
+          pairs=(
+            M16:question M16:markscheme M17:question M17:markscheme
+            M18:question M18:markscheme M19:question M19:markscheme
+            M21:question M21:markscheme M22:question M22:markscheme
+            M23:question M23:markscheme M24:question M24:markscheme
+            M25:question M25:markscheme N16:question N16:markscheme
+            N17:question N17:markscheme N18:question N18:markscheme
+            N19:question N19:markscheme N20:question N20:markscheme
+            N21:question N21:markscheme N22:question N22:markscheme
+            N23:question N23:markscheme N25:question
+          )
+          for pair in "${pairs[@]}"; do
+            paper="${pair%%:*}"
+            type="${pair##*:}"
+            echo "Preparing ${paper} ${type}"
+            response="$(curl --fail --silent --show-error --get \
+              --data-urlencode 'token=precision-crop-review-20260712-4f7c0e3b91d8' \
+              --data-urlencode "paper=${paper}" \
+              --data-urlencode "type=${type}" \
+              'https://wuwiwuhbunithfoiafzy.supabase.co/functions/v1/precision-crop-review-bundle')"
+            signed_url="$(printf '%s' "$response" | jq -r '.signed_url')"
+            test -n "$signed_url"
+            test "$signed_url" != "null"
+            curl --fail --location "$signed_url" --output "bundles/${type}/${paper}_${type}.zip"
+          done
+      - name: Upload question bundles
         uses: actions/upload-artifact@v4
         with:
-          name: m16-question-audit
-          path: M16_question.zip
+          name: atlas-question-audit-bundles
+          path: bundles/question/*.zip
+          compression-level: 0
+          retention-days: 1
+      - name: Upload markscheme bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-markscheme-audit-bundles
+          path: bundles/markscheme/*.zip
+          compression-level: 0
           retention-days: 1
