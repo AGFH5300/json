@@ -1,4 +1,4 @@
-name: Atlas audit transfer
+name: Atlas audit transfer group1
 
 on:
   pull_request:
@@ -7,28 +7,17 @@ on:
 jobs:
   transfer:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - name: Download private audit bundles
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p bundles/question bundles/markscheme
-          pairs=(
-            M16:question M16:markscheme M17:question M17:markscheme
-            M18:question M18:markscheme M19:question M19:markscheme
-            M21:question M21:markscheme M22:question M22:markscheme
-            M23:question M23:markscheme M24:question M24:markscheme
-            M25:question M25:markscheme N16:question N16:markscheme
-            N17:question N17:markscheme N18:question N18:markscheme
-            N19:question N19:markscheme N20:question N20:markscheme
-            N21:question N21:markscheme N22:question N22:markscheme
-            N23:question N23:markscheme N25:question
-          )
+          mkdir -p bundles
+          pairs=(M16:question M16:markscheme M17:question M17:markscheme M18:question M18:markscheme)
           for pair in "${pairs[@]}"; do
             paper="${pair%%:*}"
             type="${pair##*:}"
-            echo "Preparing ${paper} ${type}"
             response="$(curl --fail --silent --show-error --get \
               --data-urlencode 'token=precision-crop-review-20260712-4f7c0e3b91d8' \
               --data-urlencode "paper=${paper}" \
@@ -37,19 +26,12 @@ jobs:
             signed_url="$(printf '%s' "$response" | jq -r '.signed_url')"
             test -n "$signed_url"
             test "$signed_url" != "null"
-            curl --fail --location "$signed_url" --output "bundles/${type}/${paper}_${type}.zip"
+            curl --fail --location "$signed_url" --output "bundles/${paper}_${type}.zip"
           done
-      - name: Upload question bundles
+      - name: Upload bundle group
         uses: actions/upload-artifact@v4
         with:
-          name: atlas-question-audit-bundles
-          path: bundles/question/*.zip
-          compression-level: 0
-          retention-days: 1
-      - name: Upload markscheme bundles
-        uses: actions/upload-artifact@v4
-        with:
-          name: atlas-markscheme-audit-bundles
-          path: bundles/markscheme/*.zip
+          name: atlas-audit-group1
+          path: bundles/*.zip
           compression-level: 0
           retention-days: 1
