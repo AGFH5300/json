@@ -1,0 +1,27 @@
+name: Atlas audit transfer group7
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download private audit bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bundles
+          response="$(curl --fail --silent --show-error --get --data-urlencode 'token=precision-crop-review-20260712-4f7c0e3b91d8' --data-urlencode 'paper=N25' --data-urlencode 'type=question' 'https://wuwiwuhbunithfoiafzy.supabase.co/functions/v1/precision-crop-review-bundle')"
+          signed_url="$(printf '%s' "$response" | jq -r '.signed_url')"
+          test -n "$signed_url"; test "$signed_url" != "null"
+          curl --fail --location "$signed_url" --output bundles/N25_question.zip
+      - name: Upload bundle group
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-audit-group7
+          path: bundles/*.zip
+          compression-level: 0
+          retention-days: 1

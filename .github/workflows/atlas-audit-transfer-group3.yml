@@ -1,0 +1,31 @@
+name: Atlas audit transfer group3
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download existing private audit bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bundles
+          pairs=(M22:question M22:markscheme M23:question M23:markscheme M24:question M24:markscheme)
+          for pair in "${pairs[@]}"; do
+            paper="${pair%%:*}"; type="${pair##*:}"
+            response="$(curl --fail --silent --show-error --get --data-urlencode 'access=precision-sign-review-20260712-51c7a6e4' --data-urlencode "paper=${paper}" --data-urlencode "type=${type}" 'https://wuwiwuhbunithfoiafzy.supabase.co/functions/v1/precision-sign-review-bundle')"
+            signed_url="$(printf '%s' "$response" | jq -r '.signed_url')"
+            test -n "$signed_url"; test "$signed_url" != "null"
+            curl --fail --location "$signed_url" --output "bundles/${paper}_${type}.zip"
+          done
+      - name: Upload bundle group
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-audit-group3
+          path: bundles/*.zip
+          compression-level: 0
+          retention-days: 1
