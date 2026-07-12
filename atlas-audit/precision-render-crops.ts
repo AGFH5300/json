@@ -33,7 +33,7 @@ Deno.serve(async (req: Request) => {
     if (re || !registry) throw re || new Error("Source registry missing");
     const { data: plan, error: pe } = await sb.from("precision_crop_plan")
       .select("id,question_number,sort_order,source_page,crop_x,crop_y,crop_width,crop_height,storage_path")
-      .eq("paper_code", paperCode).eq("asset_type", assetType).order("id").range(offset, offset + limit - 1);
+      .eq("paper_code", paperCode).eq("asset_type", assetType).eq("status", "pending").order("id").range(offset, offset + limit - 1);
     if (pe) throw pe;
     if (!plan?.length) return Response.json({ paper_code: paperCode, asset_type: assetType, offset, processed: 0 });
 
