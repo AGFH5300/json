@@ -3,7 +3,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const ACCESS = "precision-stage-20260712-80c43f27";
 const PLANS: Record<string,string> = {
-  M18: "https://raw.githubusercontent.com/AGFH5300/json/f649d2fd3607f2a42d274cfa0419bc4bb525c88a/atlas-audit/plans/m18_precision_plan.json"
+  M18: "https://raw.githubusercontent.com/AGFH5300/json/f649d2fd3607f2a42d274cfa0419bc4bb525c88a/atlas-audit/plans/m18_precision_plan.json",
+  N16: "https://raw.githubusercontent.com/AGFH5300/json/ab643c752b9dc55e8a8e89d90016326ea1d85f18/atlas-audit/plans/n16_precision_plan.json"
 };
 
 Deno.serve(async (req: Request) => {
