@@ -1,0 +1,19 @@
+name: Atlas audit transfer
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download private audit bundle
+        run: |
+          curl --fail --location 'https://wuwiwuhbunithfoiafzy.supabase.co/storage/v1/object/sign/question-assets/_precision_crop_review/M16_question.zip?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8wMzc4NWI3Zi0xZTJkLTQ3MGMtOTY3Zi1hNjg3NWQxMGI3OWEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJxdWVzdGlvbi1hc3NldHMvX3ByZWNpc2lvbl9jcm9wX3Jldmlldy9NMTZfcXVlc3Rpb24uemlwIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4Mzg3NTkwOCwiZXhwIjoxNzgzODgzMTA4fQ.jPUEtnE2VIv41l3rFM130A7Mx0knq19Ommk4GU9KonQ' --output M16_question.zip
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-question-audit
+          path: M16_question.zip
+          retention-days: 1
