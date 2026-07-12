@@ -7,9 +7,9 @@ on:
 jobs:
   transfer:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
-      - name: Download private audit bundles
+      - name: Download existing private audit bundles
         shell: bash
         run: |
           set -euo pipefail
@@ -17,7 +17,7 @@ jobs:
           pairs=(M22:question M22:markscheme M23:question M23:markscheme M24:question M24:markscheme)
           for pair in "${pairs[@]}"; do
             paper="${pair%%:*}"; type="${pair##*:}"
-            response="$(curl --fail --silent --show-error --get --data-urlencode 'token=precision-crop-review-20260712-4f7c0e3b91d8' --data-urlencode "paper=${paper}" --data-urlencode "type=${type}" 'https://wuwiwuhbunithfoiafzy.supabase.co/functions/v1/precision-crop-review-bundle')"
+            response="$(curl --fail --silent --show-error --get --data-urlencode 'access=precision-sign-review-20260712-51c7a6e4' --data-urlencode "paper=${paper}" --data-urlencode "type=${type}" 'https://wuwiwuhbunithfoiafzy.supabase.co/functions/v1/precision-sign-review-bundle')"
             signed_url="$(printf '%s' "$response" | jq -r '.signed_url')"
             test -n "$signed_url"; test "$signed_url" != "null"
             curl --fail --location "$signed_url" --output "bundles/${paper}_${type}.zip"
